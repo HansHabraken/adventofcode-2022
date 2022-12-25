@@ -1,7 +1,4 @@
-# list -1 --> up
-# list +1 --> down
-# list +1 --> right
-# list -1 --> left
+import numpy as np
 
 
 def process_input_file(file_path):
@@ -39,13 +36,6 @@ def is_edge(tree_grid, tree_row, tree_row_index, tree_index):
     return False
 
 
-def is_tree_visible(tree, top_tree, bottom_tree, left_tree, right_tree):
-    if tree > top_tree or tree > bottom_tree or tree > left_tree or tree > right_tree:
-        return True
-
-    return False
-
-
 def is_tree_visible_from_edge(tree, tree_row_index, tree_index, tree_grid):
     right_trees = tree_grid[tree_row_index][tree_index + 1 :]
     left_trees = tree_grid[tree_row_index][:tree_index]
@@ -71,11 +61,33 @@ def is_tree_visible_from_edge(tree, tree_row_index, tree_index, tree_grid):
         return True
 
 
+def calculate_distance_score(tree, tree_row_index, tree_index, tree_grid):
+    right_trees = tree_grid[tree_row_index][tree_index + 1 :]
+    left_trees = tree_grid[tree_row_index][:tree_index]
+    top_trees = [tree_row[tree_index] for tree_row in tree_grid[:tree_row_index]]
+    bottom_trees = [
+        tree_row[tree_index] for tree_row in tree_grid[tree_row_index + 1 :]
+    ]
+
+    score = 1
+
+    for trees in [right_trees, left_trees, top_trees[::-1], bottom_trees]:
+        indices = [
+            index + 1 for index, item in enumerate(trees) if int(item) >= int(tree)
+        ]
+        if indices:
+            score *= indices[0]
+        else:
+            score *= len(trees)
+
+    return score
+
+
 def main():
     tree_grid = process_input_file("./day8/input.txt")
 
     total_visible_trees = 0
-    test = 0
+    distance_score_list = []
     for tree_row_index, tree_row in enumerate(tree_grid):
         for tree_index, tree in enumerate(tree_row):
             if is_edge(tree_grid, tree_row, tree_row_index, tree_index):
@@ -83,16 +95,14 @@ def main():
                 total_visible_trees += 1
                 continue  # Don't process edge trees
 
-            # visible = is_tree_visible(
-            #     tree=tree,
-            #     top_tree=tree_grid[tree_row_index - 1][tree_index],
-            #     bottom_tree=tree_grid[tree_row_index + 1][tree_index],
-            #     left_tree=tree_row[tree_index - 1],
-            #     right_tree=tree_row[tree_index + 1],
-            # )
             visible = is_tree_visible_from_edge(
                 tree, tree_row_index, tree_index, tree_grid
             )
+
+            distance_score = calculate_distance_score(
+                tree, tree_row_index, tree_index, tree_grid
+            )
+            distance_score_list.append(distance_score)
 
             if visible:
                 print("1", end="")
@@ -101,15 +111,33 @@ def main():
             else:
                 print("0", end="")
 
-            # print(f"{tree=}")
-
         print()
-        # if test == 1:
-        #     break
-        # test = 1
 
     print(f"Total visible trees: {total_visible_trees}")
+    print(f"Hightest distance score: {max(distance_score_list)}")
+
+
+def test_calculate_distance_score():
+    tree_grid = [
+        ["1", "2", "3", "2", "3"],
+        ["3", "5", "10", "2", "3"],
+        ["5", "5", "7", "2", "3"],
+        ["1", "2", "2", "2", "3"],
+        ["3", "5", "10", "2", "3"],
+        ["5", "5", "7", "2", "3"],
+    ]
+
+    tree_row_index = 3
+    tree_index = 1
+    tree = tree_grid[tree_row_index][tree_index]
+
+    expected_value = 1
+
+    return_value = calculate_distance_score(tree, tree_row_index, tree_index, tree_grid)
+    print(return_value)
+    assert return_value == expected_value
 
 
 if __name__ == "__main__":
     main()
+    test_calculate_distance_score()
