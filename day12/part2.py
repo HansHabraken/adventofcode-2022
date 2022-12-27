@@ -2,7 +2,8 @@
 # Paths -> [[start_position, n_position], [start_position, n_position]]
 # example -> [[[0,0], [0,1]], [[0,0], [1,0]]]
 
-import copy
+"""Starting from end posistion (E) and find the shortest path to an 'a' level"""
+
 import heapq
 import string
 
@@ -23,24 +24,21 @@ def process_input_file(file_path):
     return processed_grid
 
 
-def find_start_and_end_index(grid):
+def find_start_position(grid):
     start_index = []
-    end_index = []
     for row_index, row in enumerate(grid):
         for elem_index, elem in enumerate(row):
-            if elem == "S":
-                start_index = [row_index, elem_index]
             if elem == "E":
-                end_index = [row_index, elem_index]
+                start_index = [row_index, elem_index]
 
-    return start_index, end_index
+    return start_index
 
 
 def find_next_positions(current_position, grid):
     """Calculate all next positions and verify if these are able to go to"""
     current_level = grid[current_position[0]][current_position[1]]
-    if current_level == "S":
-        current_level = "a"
+    if current_level == "E":
+        current_level = "z"
 
     possible_positions = []
 
@@ -63,7 +61,7 @@ def find_next_positions(current_position, grid):
                 next_level = "a"
             if next_level == "E":
                 next_level = "z"
-            if ALL_LEVELS.index(next_level) - ALL_LEVELS.index(current_level) < 2:
+            if ALL_LEVELS.index(next_level) - ALL_LEVELS.index(current_level) >= -1:
                 # possible to move to this position
                 possible_positions.append(next_position)
 
@@ -72,7 +70,7 @@ def find_next_positions(current_position, grid):
 
 def main(input_file):
     grid = process_input_file(input_file)
-    start_position, end_position = find_start_and_end_index(grid)
+    start_position = find_start_position(grid)
 
     paths = [[start_position]]
     visited_positions = []
@@ -96,7 +94,7 @@ def main(input_file):
                 heapq.heappush(paths, next_path)
                 visited_positions.append(next_possible_position)
 
-                if next_possible_position == end_position:
+                if grid[next_possible_position[0]][next_possible_position[1]] == "a":
                     print(len(next_path) - 1)
                     found = True
                     break
